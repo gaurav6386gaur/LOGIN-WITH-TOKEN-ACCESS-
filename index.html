@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Authentication System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+        
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .dashboard {
+            display: none;
+        }
+        
+        .dashboard.active {
+            display: block;
+        }
+        
+        .profile-card, .firm-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .firm-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .firm-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .firm-item h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .firm-item p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Authentication Section -->
+        <div id="auth-section">
+            <div class="header">
+                <h1>Token Authentication System</h1>
+                <p>Secure login system with JWT token authentication</p>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('login')">Login</button>
+                <button class="tab" onclick="switchTab('register')">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="login-content" class="tab-content active">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="register-content" class="tab-content">
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">Full Name:</label>
+                        <input type="text" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email:</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password:</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <button type="submit" class="btn">Register</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="dashboard">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <p>Welcome to your account management system</p>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchDashboardTab('profile')">Profile</button>
+                <button class="tab" onclick="switchDashboardTab('firms')">My Firms</button>
+                <button class="tab" onclick="switchDashboardTab('create-firm')">Create Firm</button>
+            </div>
+            
+            <!-- Profile Tab -->
+            <div id="profile-content" class="tab-content active">
+                <div class="profile-card">
+                    <h3>User Profile</h3>
+                    <div id="profile-info"></div>
+                    <button onclick="showEditProfile()" class="btn">Edit Profile</button>
+                    <button onclick="deleteAccount()" class="btn btn-danger">Delete Account</button>
+                </div>
+                
+                <!-- Edit Profile Form (Hidden by default) -->
+                <div id="edit-profile-form" class="hidden">
+                    <h3>Edit Profile</h3>
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label>Full Name:</label>
+                            <input type="text" id="edit-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="edit-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>New Password (leave blank to keep current):</label>
+                            <input type="password" id="edit-password">
+                        </div>
+                        <button type="submit" class="btn">Update Profile</button>
+                        <button type="button" onclick="cancelEditProfile()" class="btn btn-secondary">Cancel</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Firms Tab -->
+            <div id="firms-content" class="tab-content">
+                <h3>My Firms</h3>
+                <div id="firms-list" class="firm-list"></div>
+            </div>
+            
+            <!-- Create Firm Tab -->
+            <div id="create-firm-content" class="tab-content">
+                <div class="firm-card">
+                    <h3>Create New Firm</h3>
+                    <form id="firm-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Firm Name:</label>
+                                <input type="text" id="firm-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email:</label>
+                                <input type="email" id="firm-email">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Phone:</label>
+                                <input type="tel" id="firm-phone">
+                            </div>
+                            <div class="form-group">
+                                <label>Address:</label>
+                                <input type="text" id="firm-address">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description:</label>
+                            <textarea id="firm-description" rows="4"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Create Firm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alert Messages -->
+        <div id="alert-container"></div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentUser = null;
+        let authToken = null;
+        
+        // Utility Functions
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+        }
+        
+        function switchDashboardTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('#dashboard-section .tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('#dashboard-section .tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+            
+            // Load data if needed
+            if (tabName === 'firms') {
+                loadFirms();
+            } else if (tabName === 'profile') {
+                loadProfile();
+            }
+        }
+        
+        async function apiCall(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                }
+            };
+            
+            const finalOptions = { ...defaultOptions, ...options };
+            if (finalOptions.body && typeof finalOptions.body === 'object') {
+                finalOptions.body = JSON.stringify(finalOptions.body);
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}${url}`, finalOptions);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'An error occurred');
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+        
+        // Authentication Functions
+        async function login(email, password) {
+            try {
+                const data = await apiCall('/login', {
+                    method: 'POST',
+                    body: { email, password }
+                });
+                
+                authToken = data.access_token;
+                localStorage.setItem('authToken', authToken);
+                
+                await loadProfile();
+                showDashboard();
+                showAlert('Login successful!');
+            } catch (error) {
+                showAlert(error.message, 'error');
+            }
+        }
+        
+        async function register(fullName, email, password) {
+            try {
+                await apiCall('/register', {
+                    method: 'POST',
+                    body: { full_name: fullName, email, password }
+                });
+                
+                showAlert('Registration successful! Please login.');
+                switchTab('login');
+            } catch (error) {
+                showAlert(error.message, 'error');
+            }
+        }
+        
+        async function logout() {
+            try {
+                if (authToken) {
+                    await apiCall('/logout', { method: 'POST' });
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                authToken = null;
+                currentUser = null;
+                localStorage.removeItem('authToken');
+                showAuth();
+                showAlert('Logged out successfully!');
+            }
+        }
+        
+        // Profile Functions
+        async function loadProfile() {
+            try {
+                currentUser = await apiCall('/profile');
+                displayProfile();
+            } catch (error) {
+                showAlert('Failed to load profile: ' + error.message, 'error');
+            }
+        }
+        
+        function displayProfile() {
+            const profileInfo = document.getElementById('profile-info');
+            profileInfo.innerHTML = `
+                <p><strong>Name:</strong> ${currentUser.full_name}</p>
+                <p><strong>Email:</strong> ${currentUser.email}</p>
+                <p><strong>Member Since:</strong> ${new Date(currentUser.created_at).toLocaleDateString()}</p>
+                <p><strong>Status:</strong> ${currentUser.is_active ? 'Active' : 'Inactive'}</p>
+            `;
+        }
+        
+        function showEditProfile() {
+            document.getElementById('edit-profile-form').classList.remove('hidden');
+            document.getElementById('edit-name').value = currentUser.full_name;
+            document.getElementById('edit-email').value = currentUser.email;
+        }
+        
+        function cancelEditProfile() {
+            document.getElementById('edit-profile-form').classList.add('hidden');
+        }
+        
+        async function updateProfile(fullName, email, password) {
+            try {
+                const updateData = { full_name: fullName, email };
+                if (password) {
+                    updateData.password = password;
+                }
+                
+                await apiCall('/profile', {
+                    method: 'PUT',
+                    body: updateData
+                });
+                
+                await loadProfile();
+                cancelEditProfile();
+                showAlert('Profile updated successfully!');
+            } catch (error) {
+                showAlert('Failed to update profile: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAccount() {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                try {
+                    await apiCall('/profile', { method: 'DELETE' });
+                    showAlert('Account deleted successfully!');
+                    logout();
+                } catch (error) {
+                    showAlert('Failed to delete account: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // Firm Functions
+        async function loadFirms() {
+            try {
+                const firms = await apiCall('/firms');
+                displayFirms(firms);
+            } catch (error) {
+                showAlert('Failed to load firms: ' + error.message, 'error');
+            }
+        }
+        
+        function displayFirms(firms) {
+            const firmsList = document.getElementById('firms-list');
+            
+            if (firms.length === 0) {
+                firmsList.innerHTML = '<p>No firms found. Create your first firm!</p>';
+                return;
+            }
+            
+            firmsList.innerHTML = firms.map(firm => `
+                <div class="firm-item">
+                    <h4>${firm.name}</h4>
+                    <p><strong>Description:</strong> ${firm.description || 'No description'}</p>
+                    <p><strong>Email:</strong> ${firm.email || 'Not provided'}</p>
+                    <p><strong>Phone:</strong> ${firm.phone || 'Not provided'}</p>
+                    <p><strong>Address:</strong> ${firm.address || 'Not provided'}</p>
+                    <p><strong>Created:</strong> ${new Date(firm.created_at).toLocaleDateString()}</p>
+                    <div style="margin-top: 15px;">
+                        <button onclick="editFirm(${firm.id})" class="btn">Edit</button>
+                        <button onclick="deleteFirm(${firm.id})" class="btn btn-danger">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function createFirm(firmData) {
+            try {
+                await apiCall('/firms', {
+                    method: 'POST',
+                    body: firmData
+                });
+                
+                showAlert('Firm created successfully!');
+                document.getElementById('firm-form').reset();
+                switchDashboardTab('firms');
+            } catch (error) {
+                showAlert('Failed to create firm: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteFirm(firmId) {
+            if (confirm('Are you sure you want to delete this firm? This action cannot be undone.')) {
+                try {
+                    await apiCall(`/firms/${firmId}`, { method: 'DELETE' });
+                    showAlert('Firm deleted successfully!');
+                    loadFirms();
+                } catch (error) {
+                    showAlert('Failed to delete firm: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        async function editFirm(firmId) {
+            // For demo purposes, this will prompt for new name
+            // In a real app, you'd have a proper edit form
+            const newName = prompt('Enter new firm name:');
+            if (newName) {
+                try {
+                    await apiCall(`/firms/${firmId}`, {
+                        method: 'PUT',
+                        body: { name: newName }
+                    });
+                    showAlert('Firm updated successfully!');
+                    loadFirms();
+                } catch (error) {
+                    showAlert('Failed to update firm: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        // UI Functions
+        function showAuth() {
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('dashboard-section').style.display = 'none';
+        }
+        
+        function showDashboard() {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+        }
+        
+        // Event Listeners
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            await login(email, password);
+        });
+        
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            await register(fullName, email, password);
+        });
+        
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('edit-name').value;
+            const email = document.getElementById('edit-email').value;
+            const password = document.getElementById('edit-password').value;
+            await updateProfile(fullName, email, password);
+        });
+        
+        document.getElementById('firm-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const firmData = {
+                name: document.getElementById('firm-name').value,
+                email: document.getElementById('firm-email').value || null,
+                phone: document.getElementById('firm-phone').value || null,
+                address: document.getElementById('firm-address').value || null,
+                description: document.getElementById('firm-description').value || null
+            };
+            await createFirm(firmData);
+        });
+        
+        // Initialize App
+        function initApp() {
+            const savedToken = localStorage.getItem('authToken');
+            if (savedToken) {
+                authToken = savedToken;
+                loadProfile().then(() => {
+                    showDashboard();
+                }).catch(() => {
+                    localStorage.removeItem('authToken');
+                    authToken = null;
+                    showAuth();
+                });
+            } else {
+                showAuth();
+            }
+        }
+        
+        // Start the app
+        initApp();
+    </script>
+</body>
+</html>
